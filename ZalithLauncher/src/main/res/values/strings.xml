@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- App Name (generated at build time) -->
-    <string name="app_name" translatable="false">ZalithLauncher</string>
+    <string name="app_name" translatable="false">MovteryLauncher</string>
     <string name="play">Play</string>
     <string name="download">Download</string>
     <string name="settings">Settings</string>
