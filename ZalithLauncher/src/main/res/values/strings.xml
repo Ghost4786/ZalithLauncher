@@ -1,5 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- App Name (generated at build time) -->
+    <string name="app_name" translatable="false">ZalithLauncher</string>
+    <string name="play">Play</string>
+    <string name="download">Download</string>
+    <string name="settings">Settings</string>
+    <string name="theme_toggle">Toggle Theme</string>
+    
+    <!-- Splash Screen -->
+    <string name="splash_screen_checking">Checking components…</string>
+    <string name="splash_screen_install">Install &amp; Launch</string>
+    <string name="splash_screen_apply">Apply</string>
+    <string name="splash_screen_installing">Installing…</string>
+    <string name="splash_screen_desc">Tap the button below to install required components and launch the game.</string>
+    
     <!-- Zalith Launcher -->
     <string name="generic_open">Open</string>
     <string name="generic_close">Close</string>

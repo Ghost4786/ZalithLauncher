@@ -5,6 +5,8 @@ import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
+import android.view.View
+import android.view.animation.AnimationUtils
 import androidx.core.app.ActivityCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.movtery.zalithlauncher.InfoCenter
@@ -17,7 +19,9 @@ import com.movtery.zalithlauncher.feature.unpack.UnpackComponentsTask
 import com.movtery.zalithlauncher.feature.unpack.UnpackJreTask
 import com.movtery.zalithlauncher.feature.unpack.UnpackSingleFilesTask
 import com.movtery.zalithlauncher.task.Task
+import com.movtery.zalithlauncher.ui.animation.AnimationUtils as UIAnimUtils
 import com.movtery.zalithlauncher.ui.dialog.TipDialog
+import com.movtery.zalithlauncher.ui.theme.ThemeManager
 import com.movtery.zalithlauncher.utils.StoragePermissionsUtils
 import net.kdt.pojavlaunch.LauncherActivity
 import net.kdt.pojavlaunch.MissingStorageActivity
@@ -29,16 +33,44 @@ class SplashActivity : BaseActivity() {
     private lateinit var binding: ActivitySplashBinding
     private lateinit var installableAdapter: InstallableAdapter
     private val items: MutableList<InstallableItem> = ArrayList()
+    private lateinit var themeManager: ThemeManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        themeManager = ThemeManager.getInstance(this)
+        themeManager.initialize()
 
         initItems()
 
         binding = ActivitySplashBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        binding.titleText.text = InfoDistributor.APP_NAME
+        setupUI()
+        startEntranceAnimations()
+
+        if (!Tools.checkStorageRoot()) {
+            startActivity(Intent(this, MissingStorageActivity::class.java))
+            finish()
+            return
+        }
+
+        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P && !StoragePermissionsUtils.hasStoragePermissions(this)) {
+            TipDialog.Builder(this)
+                .setTitle(R.string.generic_warning)
+                .setMessage(InfoCenter.replaceName(this, R.string.permissions_write_external_storage))
+                .setWarning()
+                .setConfirmClickListener { requestStoragePermissions() }
+                .setCancelClickListener { checkEnd() }
+                .showDialog()
+        } else {
+            checkEnd()
+        }
+    }
+
+    private fun setupUI() {
+        binding.toolbar.title = InfoDistributor.APP_NAME
+        
         binding.recyclerView.apply {
             layoutManager = LinearLayoutManager(this@SplashActivity)
             adapter = installableAdapter
@@ -48,31 +80,61 @@ class SplashActivity : BaseActivity() {
             setOnClickListener {
                 if (isStarted) return@setOnClickListener
                 isStarted = true
-                binding.splashText.setText(R.string.splash_screen_installing)
+                binding.splashText.text = getString(R.string.splash_screen_installing)
+                UIAnimUtils.fadeIn(binding.splashText)
                 installableAdapter.startAllTasks()
             }
             isClickable = false
+            alpha = 0f
+        }
+    }
+
+    private fun startEntranceAnimations() {
+        binding.toolbar.apply {
+            alpha = 0f
+            translationY = -height.toFloat()
+        }
+        
+        binding.recyclerView.apply {
+            alpha = 0f
+            translationX = -width.toFloat()
+        }
+        
+        binding.operateLayout?.let { layout ->
+            layout.apply {
+                alpha = 0f
+                translationX = width.toFloat()
+            }
         }
 
-        if (!Tools.checkStorageRoot()) {
-            startActivity(Intent(this, MissingStorageActivity::class.java))
-            finish()
-            return
+        binding.toolbar.animate()
+            .alpha(1f)
+            .translationY(0f)
+            .setDuration(400)
+            .setStartDelay(200)
+            .withEndAction {
+                binding.recyclerView.animate()
+                    .alpha(1f)
+                    .translationX(0f)
+                    .setDuration(350)
+                    .start()
+            }
+            .start()
+
+        binding.operateLayout?.let { layout ->
+            layout.animate()
+                .alpha(1f)
+                .translationX(0f)
+                .setDuration(350)
+                .setStartDelay(100)
+                .start()
         }
 
-        //如果安卓版本小于等于9，则检查存储权限（不是管理所有文件权限），拥有存储权限会保证文件、文件夹正常创建
-        //但是并不强制要求用户必须授予权限，如果用户拒绝，那么之后产生的问题将由用户承担
-        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P && !StoragePermissionsUtils.hasStoragePermissions(this)) {
-            TipDialog.Builder(this)
-                .setTitle(R.string.generic_warning)
-                .setMessage(InfoCenter.replaceName(this, R.string.permissions_write_external_storage))
-                .setWarning()
-                .setConfirmClickListener { requestStoragePermissions() }
-                .setCancelClickListener { checkEnd() } //用户取消，那就跟随用户的意愿
-                .showDialog()
-        } else {
-            checkEnd()
-        }
+        binding.startButton.animate()
+            .alpha(1f)
+            .setDuration(300)
+            .setStartDelay(600)
+            .start()
     }
 
     private fun requestStoragePermissions() {
@@ -90,8 +152,6 @@ class SplashActivity : BaseActivity() {
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == STORAGE_PERMISSION_REQUEST_CODE) {
-            //无论用户是否授予了权限，都会完成检查，因为启动器并不强制要求权限
-            //但是一旦因为存储权限出现了问题，那么将由用户自行承担后果
             checkEnd()
         }
     }
@@ -133,11 +193,28 @@ class SplashActivity : BaseActivity() {
             UnpackSingleFilesTask(this).run()
         }.execute()
 
-        binding.startButton.isClickable = true
+        binding.startButton.apply {
+            isClickable = true
+            animate()
+                .scaleX(1.05f)
+                .scaleY(1.05f)
+                .setDuration(100)
+                .withEndAction {
+                    animate()
+                        .scaleX(1f)
+                        .scaleY(1f)
+                        .setDuration(100)
+                        .start()
+                }
+                .start()
+        }
     }
 
     private fun toMain() {
-        startActivity(Intent(this, LauncherActivity::class.java))
+        val intent = Intent(this, LauncherActivity::class.java)
+        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        startActivity(intent)
+        overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
         finish()
     }
 

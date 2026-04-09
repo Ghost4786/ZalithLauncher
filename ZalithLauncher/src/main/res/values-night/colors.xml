@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Dark mode bottom nav colors -->
+    <color name="bottom_nav_color_selected_dark">@color/md_theme_dark_primary</color>
+    <color name="bottom_nav_color_unselected_dark">@color/md_theme_dark_onSurfaceVariant</color>
+    <color name="bottom_nav_item_tint_dark">@color/md_theme_dark_onSurfaceVariant</color>
+</resources>
