@@ -5,8 +5,6 @@ import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
-import android.view.View
-import android.view.animation.AnimationUtils
 import androidx.core.app.ActivityCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.movtery.zalithlauncher.InfoCenter
@@ -19,7 +17,6 @@ import com.movtery.zalithlauncher.feature.unpack.UnpackComponentsTask
 import com.movtery.zalithlauncher.feature.unpack.UnpackJreTask
 import com.movtery.zalithlauncher.feature.unpack.UnpackSingleFilesTask
 import com.movtery.zalithlauncher.task.Task
-import com.movtery.zalithlauncher.ui.animation.AnimationUtils as UIAnimUtils
 import com.movtery.zalithlauncher.ui.dialog.TipDialog
 import com.movtery.zalithlauncher.ui.theme.ThemeManager
 import com.movtery.zalithlauncher.utils.StoragePermissionsUtils
@@ -46,8 +43,21 @@ class SplashActivity : BaseActivity() {
         binding = ActivitySplashBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        setupUI()
-        startEntranceAnimations()
+        binding.toolbar.title = InfoDistributor.APP_NAME
+        binding.recyclerView.apply {
+            layoutManager = LinearLayoutManager(this@SplashActivity)
+            adapter = installableAdapter
+        }
+
+        binding.startButton.apply {
+            setOnClickListener {
+                if (isStarted) return@setOnClickListener
+                isStarted = true
+                binding.splashText.text = getString(R.string.splash_screen_installing)
+                installableAdapter.startAllTasks()
+            }
+            isClickable = false
+        }
 
         if (!Tools.checkStorageRoot()) {
             startActivity(Intent(this, MissingStorageActivity::class.java))
@@ -66,75 +76,6 @@ class SplashActivity : BaseActivity() {
         } else {
             checkEnd()
         }
-    }
-
-    private fun setupUI() {
-        binding.toolbar.title = InfoDistributor.APP_NAME
-        
-        binding.recyclerView.apply {
-            layoutManager = LinearLayoutManager(this@SplashActivity)
-            adapter = installableAdapter
-        }
-
-        binding.startButton.apply {
-            setOnClickListener {
-                if (isStarted) return@setOnClickListener
-                isStarted = true
-                binding.splashText.text = getString(R.string.splash_screen_installing)
-                UIAnimUtils.fadeIn(binding.splashText)
-                installableAdapter.startAllTasks()
-            }
-            isClickable = false
-            alpha = 0f
-        }
-    }
-
-    private fun startEntranceAnimations() {
-        binding.toolbar.apply {
-            alpha = 0f
-            translationY = -height.toFloat()
-        }
-        
-        binding.recyclerView.apply {
-            alpha = 0f
-            translationX = -width.toFloat()
-        }
-        
-        binding.operateLayout?.let { layout ->
-            layout.apply {
-                alpha = 0f
-                translationX = width.toFloat()
-            }
-        }
-
-        binding.toolbar.animate()
-            .alpha(1f)
-            .translationY(0f)
-            .setDuration(400)
-            .setStartDelay(200)
-            .withEndAction {
-                binding.recyclerView.animate()
-                    .alpha(1f)
-                    .translationX(0f)
-                    .setDuration(350)
-                    .start()
-            }
-            .start()
-
-        binding.operateLayout?.let { layout ->
-            layout.animate()
-                .alpha(1f)
-                .translationX(0f)
-                .setDuration(350)
-                .setStartDelay(100)
-                .start()
-        }
-
-        binding.startButton.animate()
-            .alpha(1f)
-            .setDuration(300)
-            .setStartDelay(600)
-            .start()
     }
 
     private fun requestStoragePermissions() {
@@ -193,21 +134,7 @@ class SplashActivity : BaseActivity() {
             UnpackSingleFilesTask(this).run()
         }.execute()
 
-        binding.startButton.apply {
-            isClickable = true
-            animate()
-                .scaleX(1.05f)
-                .scaleY(1.05f)
-                .setDuration(100)
-                .withEndAction {
-                    animate()
-                        .scaleX(1f)
-                        .scaleY(1f)
-                        .setDuration(100)
-                        .start()
-                }
-                .start()
-        }
+        binding.startButton.isClickable = true
     }
 
     private fun toMain() {

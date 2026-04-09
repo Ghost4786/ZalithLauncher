@@ -229,7 +229,6 @@ tasks.named("preBuild") {
 }
 
 dependencies {
-    implementation("androidx.dynamicanimation:dynamicanimation:1.0.0")
     implementation("javax.annotation:javax.annotation-api:1.3.2")
     implementation("commons-codec:commons-codec:1.17.1")
     // implementation("com.wu-man:android-bsf-api:3.1.3")
